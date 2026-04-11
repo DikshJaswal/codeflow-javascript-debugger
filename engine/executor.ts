@@ -43,7 +43,16 @@ export function executeNext(state: ExecutionState): ExecutionState {
     if (match) {
       const expr = match[1].replace(/;/g, "").trim();
       const val = evaluateExpression(expr, newVariables);
-      newLogs.push(String(val));
+      
+      // Properly format the value for console output
+      let formattedVal;
+      if (typeof val === 'object' && val !== null) {
+        formattedVal = JSON.stringify(val, null, 2);
+      } else {
+        formattedVal = String(val);
+      }
+      
+      newLogs.push(formattedVal);
     }
 
     return {
