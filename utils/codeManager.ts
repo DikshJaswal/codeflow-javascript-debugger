@@ -40,7 +40,7 @@ export function copyToClipboard(text: string): Promise<void> {
   return navigator.clipboard.writeText(text);
 }
 
-export function downloadAsJSON(data: any, filename: string): void {
+export function downloadAsJSON(data: unknown, filename: string): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

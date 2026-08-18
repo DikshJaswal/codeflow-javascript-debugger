@@ -1,5 +1,3 @@
-import { useState } from 'react';
-
 type Props = {
   isOpen: boolean;
   onClose: () => void;
@@ -48,6 +46,9 @@ export default function HelpModal({ isOpen, onClose }: Props) {
                 CodeFlow is an interactive JavaScript debugging tool that allows you to step through code execution line by line, 
                 inspect variables in real-time, and see console output as it happens.
               </p>
+              <p className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-sm leading-6 text-amber-200">
+                CodeFlow is a learning-focused visual debugger, not a complete JavaScript runtime. It currently handles basic statements and expressions only.
+              </p>
             </div>
 
             {/* Features */}
@@ -94,6 +95,17 @@ export default function HelpModal({ isOpen, onClose }: Props) {
                   <span className="text-slate-300">Basic arithmetic: +, -, *, /</span>
                 </div>
               </div>
+              <h3 className="mt-5 text-lg font-semibold text-white mb-3">If you add advanced code</h3>
+              <p className="text-sm leading-6 text-slate-300">
+                Unsupported syntax such as functions, loops, conditions, classes, imports, and async code will not run. CodeFlow will keep stepping and show a clear message in the Errors panel with the affected line.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-3">Import and Export</h3>
+              <p className="text-sm leading-6 text-slate-300">
+                Export downloads the code currently in the editor as <code className="rounded bg-slate-700 px-2 py-1 text-xs">code.js</code>. Import opens a file picker for a <code className="rounded bg-slate-700 px-2 py-1 text-xs">.js</code> or <code className="rounded bg-slate-700 px-2 py-1 text-xs">.txt</code> file and replaces the editor contents. Importing also clears the current execution state.
+              </p>
             </div>
 
             {/* Controls */}

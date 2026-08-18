@@ -1,120 +1,74 @@
 import { Variables, VariableValue } from "../types";
 
-export function evaluateExpression(
-  expr: string,
-  variables: Variables
-): VariableValue {
-  if (!expr) return 0;
+type Token = { kind: "number" | "string" | "identifier" | "operator" | "eof"; value: string };
 
-  const trimmed = expr.trim().replace(/;$/, ''); // Remove trailing semicolon
-
-  // Handle string literals
-  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || 
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
-    return trimmed.slice(1, -1);
-  }
-
-  // Handle boolean literals
-  if (trimmed === "true") return true;
-  if (trimmed === "false") return false;
-
-  // Handle array literals
-  if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      return [];
-    }
-  }
-
-  // Handle object literals
-  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-    try {
-      return JSON.parse(trimmed);
-    } catch {
-      // Handle JavaScript object notation (unquoted keys)
-      try {
-        // Convert JS object notation to JSON format
-        const jsonStr = trimmed
-          .replace(/(\w+):/g, '"$1":')  // Quote unquoted keys
-          .replace(/'/g, '"');           // Replace single quotes with double quotes
-        return JSON.parse(jsonStr);
-      } catch {
-        return {};
+function tokenize(source: string): Token[] {
+  const tokens: Token[] = [];
+  let index = 0;
+  while (index < source.length) {
+    const char = source[index];
+    if (/\s/.test(char)) { index += 1; continue; }
+    if (char === "'" || char === '"') {
+      const quote = char; let value = ""; index += 1;
+      while (index < source.length && source[index] !== quote) {
+        if (source[index] === "\\" && index + 1 < source.length) index += 1;
+        value += source[index++];
       }
+      if (source[index] !== quote) throw new Error("SyntaxError: unterminated string literal");
+      index += 1; tokens.push({ kind: "string", value }); continue;
     }
+    const number = source.slice(index).match(/^(?:\d+(?:\.\d*)?|\.\d+)/)?.[0];
+    if (number) { tokens.push({ kind: "number", value: number }); index += number.length; continue; }
+    const identifier = source.slice(index).match(/^[a-zA-Z_$][a-zA-Z0-9_$]*/)?.[0];
+    if (identifier) { tokens.push({ kind: "identifier", value: identifier }); index += identifier.length; continue; }
+    if ("+-*/(),[]{}:".includes(char)) { tokens.push({ kind: "operator", value: char }); index += 1; continue; }
+    throw new Error(`SyntaxError: unexpected token '${char}'`);
   }
+  tokens.push({ kind: "eof", value: "" });
+  return tokens;
+}
 
-  // Handle numeric literals (before variable references)
-  const numValue = Number(trimmed);
-  if (!isNaN(numValue)) {
-    return numValue;
-  }
-
-  // Handle variable references
-  if (variables[trimmed] !== undefined) {
-    return variables[trimmed];
-  }
-  
-  // If we get here, it's an undefined variable - throw an error
-  if (trimmed && /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(trimmed)) {
-    throw new Error(`ReferenceError: ${trimmed} is not defined`);
-  }
-
-  // Handle arithmetic expressions only if they contain operators
-  if (trimmed.includes('+') || trimmed.includes('-') || trimmed.includes('*') || trimmed.includes('/')) {
-    let replaced = trimmed;
-
-    // Replace variables
-    Object.keys(variables).forEach((key) => {
-      const value = variables[key];
-      if (typeof value === "number") {
-        const regex = new RegExp(`\\b${key}\\b`, "g");
-        replaced = replaced.replace(regex, value.toString());
-      }
-    });
-
-    // Add spacing for operators
-    replaced = replaced
-      .replaceAll("+", " + ")
-      .replaceAll("-", " - ")
-      .replaceAll("*", " * ")
-      .replaceAll("/", " / ");
-
-    const tokens = replaced.split(" ").filter(Boolean);
-
-    if (tokens.length === 0) return 0;
-
-    let result = Number(tokens[0]);
-    if (isNaN(result)) return 0;
-
-    for (let i = 1; i < tokens.length; i += 2) {
-      const operator = tokens[i];
-      const nextValue = Number(tokens[i + 1]);
-
-      if (isNaN(nextValue)) continue;
-
-      switch (operator) {
-        case "+":
-          result += nextValue;
-          break;
-        case "-":
-          result -= nextValue;
-          break;
-        case "*":
-          result *= nextValue;
-          break;
-        case "/":
-          if (nextValue === 0) return result;
-          result /= nextValue;
-          break;
-        default:
-          break;
-      }
+export function evaluateExpression(expr: string, variables: Variables): VariableValue {
+  const tokens = tokenize(expr.trim().replace(/;$/, ""));
+  let position = 0;
+  const peek = () => tokens[position];
+  const take = (value?: string) => {
+    const token = tokens[position];
+    if (value && token.value !== value) throw new Error(`SyntaxError: expected '${value}'`);
+    position += 1; return token;
+  };
+  const primary = (): VariableValue => {
+    const token = peek();
+    if (token.kind === "number") { take(); return Number(token.value); }
+    if (token.kind === "string") { take(); return token.value; }
+    if (token.kind === "identifier") {
+      take();
+      if (token.value === "true") return true;
+      if (token.value === "false") return false;
+      if (token.value === "null") return null;
+      if (!(token.value in variables)) throw new Error(`ReferenceError: ${token.value} is not defined`);
+      return variables[token.value];
     }
-
-    return isNaN(result) ? 0 : result;
-  }
-
-  return 0;
+    if (token.value === "(") { take("("); const value = additive(); take(")"); return value; }
+    if (token.value === "[") {
+      take("["); const values: VariableValue[] = [];
+      while (peek().value !== "]") { values.push(additive()); if (peek().value !== ",") break; take(","); }
+      take("]"); return values;
+    }
+    if (token.value === "{") {
+      take("{"); const result: { [key: string]: VariableValue } = {};
+      while (peek().value !== "}") {
+        const key = take(); if (key.kind !== "identifier" && key.kind !== "string") throw new Error("SyntaxError: invalid object key");
+        take(":"); result[key.value] = additive(); if (peek().value !== ",") break; take(",");
+      }
+      take("}"); return result;
+    }
+    throw new Error("SyntaxError: expected an expression");
+  };
+  const unary = (): VariableValue => { if (peek().value === "-") { take("-"); const value = unary(); if (typeof value !== "number") throw new Error("TypeError: unary - requires a number"); return -value; } return primary(); };
+  const multiplicative = (): VariableValue => { let left = unary(); while (["*", "/"].includes(peek().value)) { const op = take().value; const right = unary(); if (typeof left !== "number" || typeof right !== "number") throw new Error("TypeError: arithmetic requires numbers"); left = op === "*" ? left * right : left / right; } return left; };
+  function additive(): VariableValue { let left = multiplicative(); while (["+", "-"].includes(peek().value)) { const op = take().value; const right = multiplicative(); if (op === "+" && (typeof left === "string" || typeof right === "string")) left = String(left) + String(right); else if (typeof left === "number" && typeof right === "number") left = op === "+" ? left + right : left - right; else throw new Error("TypeError: incompatible operands"); } return left; }
+  const value = additive();
+  if (peek().kind !== "eof") throw new Error(`SyntaxError: unexpected token '${peek().value}'`);
+  return value;
 }

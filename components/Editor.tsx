@@ -1,6 +1,7 @@
 "use client";
 
 import Editor from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 import { useRef, useEffect } from "react";
 
 type Props = {
@@ -18,16 +19,16 @@ export default function CodeEditor({
   breakpoints = [],
   toggleBreakpoint,
 }: Props) {
-  const editorRef = useRef<any>(null);
-  const decorationsRef = useRef<any>([]);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const decorationsRef = useRef<string[]>([]);
 
-  const handleEditorDidMount = (editor: any) => {
-    editorRef.current = editor;
+  const handleEditorDidMount = (instance: editor.IStandaloneCodeEditor) => {
+    editorRef.current = instance;
 
     // 🔴 Click gutter → toggle breakpoint
-    editor.onMouseDown((e: any) => {
-      if (e.target.type === 2) {
-        const line = e.target.position.lineNumber - 1;
+    instance.onMouseDown((event) => {
+      if (event.target.type === 2 && event.target.position) {
+        const line = event.target.position.lineNumber - 1;
         toggleBreakpoint(line);
       }
     });
@@ -37,7 +38,7 @@ export default function CodeEditor({
     if (!editorRef.current) return;
 
     const editor = editorRef.current;
-    const decorations: any[] = [];
+    const decorations: editor.IModelDeltaDecoration[] = [];
 
     // 🟡 Current line
     if (currentLine !== undefined) {
@@ -77,7 +78,8 @@ export default function CodeEditor({
       decorations
     );
 
-    if (currentLine !== undefined) {
+    const model = editor.getModel();
+    if (currentLine !== undefined && model && currentLine < model.getLineCount()) {
       editor.revealLineInCenter(currentLine + 1);
     }
   }, [currentLine, breakpoints]);

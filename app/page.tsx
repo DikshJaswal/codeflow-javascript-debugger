@@ -37,29 +37,31 @@ let errorVar = undefinedVar;`);
   const [history, setHistory] = useState<ExecutionState[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0); // Current step in history
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [breakpoints, setBreakpoints] = useState<number[]>([]);
 
-  // 🔴 Toggle Breakpoints
   const toggleBreakpoint = (line: number) => {
-    setState((prev) => {
-      if (!prev) return prev;
-
-      const exists = prev.breakpoints.includes(line);
-      const updated = exists
-        ? prev.breakpoints.filter((l) => l !== line)
-        : [...prev.breakpoints, line];
-
-      return { ...prev, breakpoints: updated };
+    setBreakpoints((previous) => {
+      const updated = previous.includes(line) ? previous.filter((item) => item !== line) : [...previous, line].sort((a, b) => a - b);
+      setState((prev) => prev ? { ...prev, breakpoints: updated } : prev);
+      return updated;
     });
   };
 
   // ▶ Run
   const handleRun = () => {
     let newState = createExecutionState(code);
-    newState = executeNext(newState);
+    newState.breakpoints = breakpoints;
+    const snapshots: ExecutionState[] = [];
+    while (!newState.isFinished) {
+      const next = executeNext(newState);
+      if (next === newState) break;
+      newState = next;
+      snapshots.push(newState);
+    }
 
     setState(newState);
-    setHistory([newState]);
-    setCurrentIndex(0);
+    setHistory(snapshots.length ? snapshots : [newState]);
+    setCurrentIndex(Math.max(0, snapshots.length - 1));
     setIsPlaying(false);
   };
 
@@ -69,6 +71,7 @@ let errorVar = undefinedVar;`);
 
     if (!state) {
       let newState = createExecutionState(code);
+      newState.breakpoints = breakpoints;
       newState = executeNext(newState);
 
       setState(newState);
@@ -90,6 +93,14 @@ let errorVar = undefinedVar;`);
     }
   };
 
+  const handleCodeChange = (value: string) => {
+    setCode(value);
+    setState(null);
+    setHistory([]);
+    setCurrentIndex(0);
+    setIsPlaying(false);
+  };
+
   // ⬅ BACK (FIXED)
   const handleBack = () => {
   setIsPlaying(false);
@@ -109,8 +120,9 @@ let errorVar = undefinedVar;`);
 
   // ▶ Play
   const handlePlay = () => {
-    if (!state) {
+    if (!state || state.isFinished) {
       let newState = createExecutionState(code);
+      newState.breakpoints = breakpoints;
       newState = executeNext(newState);
 
       setState(newState);
@@ -147,8 +159,7 @@ let errorVar = undefinedVar;`);
   const handleImport = async () => {
     try {
       const importedCode = await importCode();
-      setCode(importedCode);
-      handleReset(); // Reset execution when importing new code
+      handleCodeChange(importedCode);
     } catch (error) {
       console.error('Failed to import code:', error);
     }
@@ -169,7 +180,15 @@ let errorVar = undefinedVar;`);
 
   const interval = setInterval(() => {
     setState((prev) => {
-      if (!prev) return prev;
+      if (!prev) {
+        let initial = createExecutionState(code);
+        initial.breakpoints = breakpoints;
+        initial = executeNext(initial);
+        setHistory([initial]);
+        setCurrentIndex(0);
+        if (initial.isFinished) setIsPlaying(false);
+        return initial;
+      }
 
       const next = executeNext(prev);
 
@@ -189,14 +208,22 @@ let errorVar = undefinedVar;`);
   }, 600);
 
   return () => clearInterval(interval);
-}, [isPlaying]);
+}, [isPlaying, code, breakpoints]);
 
   return (
-    <div className="min-h-screen bg-slate-900">
-      <div className="flex flex-col">
+    <main className="min-h-screen overflow-x-clip bg-slate-950">
+      <div className="flex min-h-screen items-center justify-center px-6 lg:hidden">
+        <div className="max-w-md rounded-3xl border border-slate-700 bg-slate-900 p-8 text-center shadow-2xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-400 to-blue-600 text-3xl shadow-lg">⌘</div>
+          <h1 className="text-2xl font-bold text-white">CodeFlow is built for desktop</h1>
+          <p className="mt-3 leading-7 text-slate-400">Please open this JavaScript debugger on a desktop or laptop for the best editor, breakpoint, and scrolling experience.</p>
+          <p className="mt-5 text-sm font-medium text-emerald-400">Minimum recommended width: 1024px</p>
+        </div>
+      </div>
+      <div className="hidden min-h-screen flex-col lg:flex">
         
         {/* Header */}
-        <div className="sticky top-0 z-10 bg-slate-800 border-b border-slate-700 px-6 py-4">
+        <div className="sticky top-0 z-30 bg-slate-800 border-b border-slate-700 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
@@ -219,7 +246,7 @@ let errorVar = undefinedVar;`);
             <div className="flex items-center space-x-3">
               {state && (
                 <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-medium">
-                  Line {state.currentLine + 1}
+                  Line {Math.min(state.currentLine + 1, state.lines.length)} · Step {Math.min(currentIndex + 1, history.length)}/{history.length}
                 </div>
               )}
               {isPlaying && (
@@ -243,7 +270,7 @@ let errorVar = undefinedVar;`);
         </div>
 
         {/* Controls */}
-        <div className="sticky top-16 z-10 bg-slate-800/50 border-b border-slate-700 px-6 py-4">
+        <div className="sticky top-[73px] z-20 border-b border-slate-700 bg-slate-800/95 px-6 py-4 backdrop-blur">
           <div className="flex flex-col space-y-4">
             <Controls
               onRun={handleRun}
@@ -264,10 +291,10 @@ let errorVar = undefinedVar;`);
 
         {/* Main Content */}
         <div className="bg-slate-900">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 p-6">
+          <div className="grid min-h-[calc(100vh-150px)] grid-cols-1 items-start gap-6 p-6 lg:grid-cols-2">
             
             {/* Code Editor */}
-            <div className="flex flex-col bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-2xl">
+            <div className="sticky top-[145px] flex h-[calc(100vh-190px)] min-h-[600px] flex-col self-start overflow-hidden rounded-xl border border-slate-700 bg-slate-800 shadow-2xl">
               <div className="flex items-center justify-between px-4 py-3 bg-slate-900/50 border-b border-slate-700">
                 <div className="flex items-center space-x-2">
                   <div className="w-3 h-3 bg-red-500 rounded-full"></div>
@@ -278,12 +305,12 @@ let errorVar = undefinedVar;`);
                 <div className="text-xs text-slate-500">JavaScript</div>
               </div>
               
-              <div className="flex-1 min-h-0">
+              <div className="min-h-0 flex-1">
                 <CodeEditor
                   code={code}
-                  setCode={setCode}
+                  setCode={handleCodeChange}
                   currentLine={state?.currentLine}
-                  breakpoints={state?.breakpoints || []}
+                  breakpoints={breakpoints}
                   toggleBreakpoint={toggleBreakpoint}
                 />
               </div>
@@ -294,7 +321,7 @@ let errorVar = undefinedVar;`);
             </div>
 
             {/* Side Panels */}
-            <div className="flex flex-col space-y-4">
+            <div className="flex min-h-[600px] flex-col space-y-4 pr-1">
               
               {/* Variables Panel */}
               <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden shadow-xl">
@@ -305,7 +332,7 @@ let errorVar = undefinedVar;`);
                   </h3>
                 </div>
                 <div className="p-4">
-                  <VariablePanel variables={state?.variables || {}} />
+                  <VariablePanel variables={state?.variables || {}} prevVariables={state?.prevVariables} />
                 </div>
               </div>
 
@@ -343,6 +370,6 @@ let errorVar = undefinedVar;`);
 
       {/* Help Modal */}
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
-    </div>
+    </main>
   );
 }
