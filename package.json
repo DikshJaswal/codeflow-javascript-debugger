@@ -1,12 +1,13 @@
 {
-  "name": "code-visualizer",
-  "version": "0.1.0",
+  "name": "codeflow-debugger",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "tsx --test __tests__/executor.test.ts"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

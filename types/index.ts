@@ -3,6 +3,7 @@ export type VariableValue =
   | string
   | boolean
   | null
+  | undefined
   | VariableValue[]
   | { [key: string]: VariableValue };
 

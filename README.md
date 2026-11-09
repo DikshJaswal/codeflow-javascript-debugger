@@ -1,207 +1,123 @@
-# CodeFlow - JavaScript Visual Debugger
+# CodeFlow — JavaScript Visual Debugger
 
-A sophisticated JavaScript debugging tool that provides real-time visualization of code execution with step-by-step analysis, variable inspection, and comprehensive error handling.
+[![Live Demo](https://img.shields.io/badge/Demo-Live%20App-0ea5e9?style=for-the-badge&logo=vercel)](https://codeflow-javascript-debugger.vercel.app/)
+[![Next.js 16](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React 19](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Monaco Editor](https://img.shields.io/badge/Monaco_Editor-1e1e1e?style=for-the-badge&logo=visualstudiocode&logoColor=007ACC)](https://microsoft.github.io/monaco-editor/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-## **What Makes CodeFlow Unique?**
+**CodeFlow** is an interactive web-based JavaScript visual debugger and execution visualizer built with **Next.js 16 (Turbopack)**, **React 19**, and **Monaco Editor**. It features an in-house recursive-descent expression parser, step-by-step state machine, time-travel history rewind, real-time variable inspection with type colorization, interactive gutter breakpoints, and virtual console logging.
 
-### **Custom JavaScript Engine**
-- **Built from scratch** - No external debugging libraries used
-- **Expression Evaluator** - Handles arithmetic, variables, objects, arrays, and strings
-- **Execution Engine** - Step-by-step code parsing and execution
-- **Error Detection** - Comprehensive error catching with line numbers
+🔗 **Live App:** [https://codeflow-javascript-debugger.vercel.app/](https://codeflow-javascript-debugger.vercel.app/)
 
-### **Advanced Features**
-- **Real-time Variable Tracking** - Watch variables change as code executes
-- **Interactive Debugging** - Step, run, pause, and reset execution
-- **Console Output Visualization** - See console.log results in real-time
-- **Error Panel** - Detailed error messages with execution context
-- **Responsive Design** - Works seamlessly on desktop and mobile
-- **Professional UI** - Modern interface with Tailwind CSS
+---
 
-## **Technical Skills Demonstrated**
+## ⚡ What Makes CodeFlow Unique?
 
-### **Frontend Development**
-- **React 19** with latest hooks and patterns
-- **TypeScript** for type safety and better code quality
-- **Next.js 15** for modern full-stack development
-- **Tailwind CSS** for professional, responsive styling
-- **Monaco Editor** integration (VS Code editor)
+### 1. In-House JavaScript Execution Engine
+- **No External Debugging Libraries:** Built from scratch with a custom lexical tokenizer and recursive-descent AST evaluator.
+- **Variable Mutation & Expressions:** Supports variable declarations (`let`, `const`, `var`), reassignments (`=`), compound assignments (`+=`, `-=`, `*=`, `/=`, `%=`), and increment/decrement operators (`++`, `--`).
+- **Complex Data Structures:** Full parsing and runtime mutation for object literals (`{ key: value }`), nested property access (`obj.user.name`), array literals (`[1, 2, 3]`), and indexed access (`arr[0]`).
+- **Multi-Argument Console Logging:** Formats objects, arrays, and primitive arguments in real-time (`console.log("Score:", score)`).
 
-### **Advanced JavaScript**
-- **Expression Parser** - Custom implementation for evaluating JavaScript expressions
-- **AST-like Processing** - Parsing and executing code step by step
-- **Error Handling** - Comprehensive try-catch with meaningful error messages
-- **State Management** - Complex state with React hooks
+### 2. Time-Travel Debugging (Step Forward & Rewind)
+- **Immutable State History Stack:** Every step captures a complete execution snapshot.
+- **Rewind (Back):** Step backward in time to inspect earlier variable states without rerunning code.
+- **Interactive Breakpoints:** Click line numbers directly in the Monaco gutter to set red dot breakpoints.
+- **Continuous Execution:** "Play" mode with adjustable speed multiplier (`0.5x`, `1x`, `2x`).
 
-### **Software Engineering**
-- **Component Architecture** - Clean, reusable React components
-- **Code Organization** - Proper separation of concerns
-- **Performance Optimization** - Efficient rendering and state updates
-- **User Experience** - Intuitive interface with help system
+### 3. Developer Experience & UI Polish
+- **VS Code Core:** Powered by the Monaco Editor with active line execution decorations (`deltaDecorations`), syntax highlighting, and auto-scrolling.
+- **Visual State Diffing:** Active variables highlight in real time when mutated during a step.
+- **Interactive Code Presets:** 1-click preset selector with ready-to-run examples (Tour, Object & Array Mutations, Breakpoint Debugging, Exception Handling).
+- **Responsive Workspace:** Clean desktop and tablet-friendly layouts with collapsible diagnostic tabs.
 
-## **Resume Value**
+---
 
-This project demonstrates:
+## 🛠️ Project Architecture
 
-### **Technical Excellence**
-- **Complex Problem Solving** - Built a JavaScript engine from scratch
-- **Advanced React Skills** - State management, component architecture
-- **TypeScript Proficiency** - Type-safe development practices
-- **Modern Development** - Latest frameworks and best practices
+```
+codeflow-javascript-debugger/
+├── app/                       # Next.js App Router
+│   ├── layout.tsx             # Root layout with metadata & branded favicons
+│   ├── page.tsx               # Main interactive debugger workspace & state
+│   └── globals.css            # Tailwind CSS v4 styling & animations
+├── components/                # React Components
+│   ├── Controls.tsx           # Execution action buttons (Run, Step, Play, Back, Reset)
+│   ├── Editor.tsx             # Monaco Editor with gutter breakpoints & line tracking
+│   ├── VariablePanel.tsx      # Real-time variable inspector with type badges & search
+│   ├── ConsolePanel.tsx       # Terminal output panel with clear capability
+│   ├── ErrorPanel.tsx         # Exception diagnostics with line-number context
+│   └── HelpModal.tsx          # Interactive user guide & feature reference
+├── engine/                    # In-House Execution Engine
+│   ├── evaluator.ts           # Lexer & recursive-descent expression evaluator
+│   └── executor.ts            # Step-by-step state machine & line executor
+├── utils/                     # Utilities & Presets
+│   ├── codeManager.ts         # Export, import, and clipboard helpers
+│   └── examples.ts            # Interactive preset code examples
+└── __tests__/                 # Automated Unit & Integration Tests
+    └── executor.test.ts       # 12 automated test cases for parser & executor
+```
 
-### **Engineering Practices**
-- **Clean Code** - Well-organized, maintainable codebase
-- **User Experience** - Professional UI with help system
-- **Responsive Design** - Mobile-friendly interface
-- **Performance** - Efficient rendering and updates
+---
 
-### **Key Talking Points for Interviews**
-- "Built a JavaScript debugging engine with custom expression evaluator"
-- "Implemented real-time code execution visualization with React 19"
-- "Created responsive UI with modern TypeScript and Tailwind CSS"
-- "Integrated Monaco Editor for professional code editing experience"
-
-## **Getting Started**
+## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ 
+- Node.js 18+ (Node.js 20+ recommended)
 - npm or yarn
 
 ### Installation
 
-1. Clone the repository
 ```bash
-git clone <repository-url>
-cd code-visualizer
-```
+# Clone the repository
+git clone https://github.com/DikshJaswal/codeflow-javascript-debugger.git
+cd codeflow-javascript-debugger
 
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
-# or
-yarn install
-```
 
-3. Run the development server
-```bash
+# Start development server
 npm run dev
-# or
-yarn dev
 ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Usage
+---
 
-1. **Write Code** - Enter JavaScript code in the editor
-2. **Execute** - Use the control buttons to run, step, or play your code
-3. **Inspect** - Watch variables and console output update in real-time
-4. **Debug** - Set breakpoints and use step execution to debug your code
-5. **Export** - Save your work using the export functionality
+## 🧪 Testing & Verification
 
-### Supported JavaScript Features
-- Variable declarations (`let`, `const`, `var`)
-- Basic arithmetic operations (`+`, `-`, `*`, `/`)
-- String literals (single and double quotes)
-- Boolean literals (`true`, `false`)
-- Array literals (`[1, 2, 3]`)
-- Object literals (`{key: value}`)
-- Console logging (`console.log()`)
-
-## Controls
-
-- **Run** - Execute code from the beginning
-- **Step** - Execute one line at a time
-- **Play** - Auto-execute with delay between steps
-- **Pause** - Pause auto-execution
-- **Continue** - Continue execution after breakpoint
-- **Back** - Go back one execution step
-- **Reset** - Clear execution state
-- **Export** - Download code as file
-- **Import** - Load code from file
-- **Copy** - Copy code to clipboard
-
-## Project Structure
-
-```
-code-visualizer/
-  app/                  # Next.js app directory
-    page.tsx           # Main application page
-  components/          # React components
-    Controls.tsx       # Control buttons
-    Editor.tsx         # Code editor
-    VariablePanel.tsx  # Variable display
-    ConsolePanel.tsx   # Console output
-    ErrorPanel.tsx     # Error display
-  engine/             # Execution engine
-    executor.ts        # Code execution logic
-    evaluator.ts       # Expression evaluation
-  types/              # TypeScript type definitions
-  utils/              # Utility functions
-    codeManager.ts     # Export/import functionality
-```
-
-## Testing
-
-Run the test suite to verify functionality:
+The engine includes automated unit tests covering expression parsing, variable reassignments, object/array mutations, breakpoints, and runtime error recovery:
 
 ```bash
-# Run evaluator tests
-node test-fix.js
+# Run automated test suite
+npm test
 
-# Run manual tests
-node test-executor.js
-```
+# Run ESLint check
+npm run lint
 
-## Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to a GitHub repository
-2. Connect your repository to [Vercel](https://vercel.com)
-3. Deploy automatically with zero configuration
-
-### Manual Deployment
-
-1. Build the application
-```bash
+# Run Next.js production build
 npm run build
 ```
 
-2. Start the production server
-```bash
-npm start
-```
+---
 
-### Environment Variables
+## 📝 Controls Guide
 
-- `NEXT_PUBLIC_APP_NAME` - Application name
-- `NEXT_PUBLIC_APP_VERSION` - Application version
+| Action | Function |
+| :--- | :--- |
+| **Run** | Executes the entire program continuously until completion or breakpoint |
+| **Step** | Executes the single next line and updates variables |
+| **Back** | Rewinds execution state back by one step (Time Travel) |
+| **Play / Pause** | Auto-steps through code with configurable speed (`0.5x`, `1x`, `2x`) |
+| **Continue** | Resumes execution from a paused breakpoint until the next breakpoint |
+| **Reset** | Clears the current execution session and resets variable scopes |
+| **Export / Import** | Download code as a `.js` file or load existing files into the editor |
+| **Presets Dropdown** | Switch between interactive code demos with 1 click |
 
-## Contributing
+---
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
+## 📄 License
 
-## License
-
-This project is open source and available under the [MIT License](LICENSE).
-
-## Technologies Used
-
-- **Next.js 16** - React framework
-- **TypeScript** - Type safety
-- **Tailwind CSS** - Styling
-- **Monaco Editor** - Code editing
-- **React** - UI components
-
-## Future Enhancements
-
-- [ ] Support for functions and control flow
-- [ ] Advanced debugging features
-- [ ] Code sharing and collaboration
-- [ ] Performance profiling
-- [ ] Additional language support
+This project is open-source under the [MIT License](LICENSE).
